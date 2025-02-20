@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Steganography - Encode</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #000;
+            color: #0f0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+            background: linear-gradient(rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9));
+        }
+
+        .glass-container {
+            background: rgba(0, 20, 0, 0.7);
+            border: 1px solid rgba(0, 255, 0, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 255, 0, 0.15);
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-card {
+            background: rgba(0, 10, 0, 0.9);
+            border: 1px solid rgba(0, 255, 0, 0.1);
+            color: #0f0;
+        }
+
+        .text-white, .nav-link {
+            color: #0f0 !important;
+        }
+
+        .form-control {
+            background: rgba(0, 20, 0, 0.8);
+            border-color: rgba(0, 255, 0, 0.2);
+            color: #0f0;
+        }
+
+        .form-control:focus {
+            background: rgba(0, 30, 0, 0.9);
+            border-color: #0f0;
+            color: #0f0;
+            box-shadow: 0 0 0 0.25rem rgba(0, 255, 0, 0.25);
+        }
+
+        .btn-primary, .btn-success {
+            background: transparent;
+            border: 1px solid #0f0;
+            color: #0f0;
+        }
+
+        .btn-primary:hover, .btn-success:hover {
+            background: rgba(0, 255, 0, 0.1);
+            border-color: #0f0;
+            color: #fff;
+        }
+
+        ::placeholder {
+            color: rgba(0, 255, 0, 0.5) !important;
+        }
+
+        .spinner-border {
+            border-color: #0f0;
+            border-right-color: transparent;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 0 red, -2px 0 0 blue; }
+            1% { text-shadow: none; }
+            2% { text-shadow: 2px 0 0 red, -2px 0 0 blue; }
+            100% { text-shadow: none; }
+        }
+
+        h1, h4 { animation: glitch 3s infinite; }
+
+        .password-wrapper {
+            position: relative;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: rgba(0, 255, 0, 0.5);
+            z-index: 10;
+        }
+        
+        .password-toggle:hover {
+            color: #0f0;
+        }
+
+        .password-strength-meter {
+            height: 4px;
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+        }
+
+        .strength-bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .password-feedback {
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            color: rgba(0, 255, 0, 0.7) !important;
+        }
+
+        .weak { background-color: #ff0000; }
+        .medium { background-color: #ffff00; }
+        .strong { background-color: #0f0; }
+
+        .preview-container {
+            max-width: 300px;
+            margin: 1rem auto;
+        }
+
+        .preview-image {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            display: none;
+            border: 1px solid rgba(0, 255, 0, 0.2);
+        }
+
+        #processedImage {
+            border: 1px solid rgba(0, 255, 0, 0.2);
+            max-height: 300px;
+        }
+
+        .text-primary {
+            color: #0f0 !important;
+        }
+
+        .icon-float { 
+            animation: float 3s ease-in-out infinite;
+            color: #0f0 !important;  /* Update icon color */
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-bg"></div>
+    <div class="container min-vh-100 d-flex align-items-center justify-content-center py-5">
+        <div class="glass-container w-100">
+            <nav class="nav justify-content-center mb-4">
+                <a class="nav-link text-white" href="/">Home</a>
+                <a class="nav-link text-white" href="/encode">Encode</a>
+                <a class="nav-link text-white" href="/decode">Decode</a>
+            </nav>
+
+            <div class="text-center mb-5">
+                <h1 class="display-4 text-white mb-3">Encode Message</h1>
+                <p class="lead text-white">Hide your secret message within an image securely</p>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="feature-card p-4">
+                        <form id="encodeForm">
+                            <div class="mb-4 text-center">
+                                <i class="fas fa-file-image fa-3x text-primary mb-3 icon-float"></i>
+                                <input type="file" id="encodeImage" accept="image/*" class="form-control" required>
+                                <div class="preview-container">
+                                    <img id="imagePreview" class="preview-image">
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <textarea class="form-control" id="message" rows="4" 
+                                    placeholder="Enter your secret message" required></textarea>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="password-input-group">
+                                    <div class="password-wrapper">
+                                        <input type="password" 
+                                               class="form-control" 
+                                               id="encodePassword" 
+                                               placeholder="Enter password"
+                                               pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$"
+                                               title="Must contain at least 8 characters, including letters, numbers and special characters"
+                                               required>
+                                        <i class="fas fa-eye password-toggle" id="passwordToggle"></i>
+                                    </div>
+                                    <div class="password-strength-meter">
+                                        <div class="strength-bar" id="strengthBar"></div>
+                                    </div>
+                                    <p class="password-feedback text-muted" id="passwordFeedback">
+                                        Password must be at least 8 characters long
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 py-2">
+                                <i class="fas fa-lock me-2"></i>Encode Message
+                            </button>
+                        </form>
+                    </div>
+
+                    <div id="loadingSpinner" class="text-center mt-4 d-none">
+                        <div class="spinner-border text-light"></div>
+                        <p class="text-white mt-2">Processing...</p>
+                    </div>
+
+                    <div id="resultSection" class="feature-card mt-4 p-4 text-center d-none">
+                        <h4 class="mb-3">Encoded Successfully!</h4>
+                        <img id="processedImage" class="img-fluid rounded mb-3 mx-auto d-block" style="max-height: 300px;">
+                        <button id="downloadBtn" class="btn btn-success">
+                            <i class="fas fa-download me-2"></i>Download Encoded Image
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add image preview functionality
+        document.getElementById('encodeImage').addEventListener('change', function(e) {
+            const preview = document.getElementById('imagePreview');
+            const file = e.target.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+
+        // Add password strength checker
+        document.getElementById('encodePassword').addEventListener('input', function(e) {
+            const password = e.target.value;
+            const strengthBar = document.getElementById('strengthBar');
+            const feedback = document.getElementById('passwordFeedback');
+            
+            // Calculate password strength
+            const hasLength = password.length >= 8;
+            const hasLetter = /[A-Za-z]/.test(password);
+            const hasNumber = /\d/.test(password);
+            const hasSpecial = /[@$!%*#?&]/.test(password);
+            
+            let strength = 0;
+            if (hasLength) strength++;
+            if (hasLetter) strength++;
+            if (hasNumber) strength++;
+            if (hasSpecial) strength++;
+            
+            // Update UI based on strength
+            strengthBar.className = 'strength-bar';
+            switch(strength) {
+                case 0:
+                case 1:
+                    strengthBar.classList.add('weak');
+                    strengthBar.style.width = '25%';
+                    feedback.textContent = 'Password is too weak';
+                    feedback.className = 'password-feedback text-danger';
+                    break;
+                case 2:
+                case 3:
+                    strengthBar.classList.add('medium');
+                    strengthBar.style.width = '50%';
+                    feedback.textContent = 'Password could be stronger';
+                    feedback.className = 'password-feedback text-warning';
+                    break;
+                case 4:
+                    strengthBar.classList.add('strong');
+                    strengthBar.style.width = '100%';
+                    feedback.textContent = 'Password is strong';
+                    feedback.className = 'password-feedback text-success';
+                    break;
+            }
+        });
+
+        // Enhance existing form submission
+        const existingSubmitHandler = document.getElementById('encodeForm').onsubmit;
+        document.getElementById('encodeForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            // Validate password
+            const password = document.getElementById('encodePassword').value;
+            const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+            
+            if (!passwordRegex.test(password)) {
+                alert('Password must contain at least 8 characters, including letters, numbers and special characters');
+                return;
+            }
+            
+            // Call existing handler
+            await existingSubmitHandler(e);
+        };
+
+        document.getElementById('encodeForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const resultSection = document.getElementById('resultSection');
+            
+            try {
+                loadingSpinner.classList.remove('d-none');
+                
+                const formData = new FormData();
+                const imageFile = document.getElementById('encodeImage').files[0];
+                const message = document.getElementById('message').value;
+                const password = document.getElementById('encodePassword').value;
+                
+                if (!imageFile) throw new Error('Please select an image');
+                if (!message) throw new Error('Please enter a message');
+                if (!password) throw new Error('Please enter a password');
+                
+                formData.append('image', imageFile);
+                formData.append('message', message);
+                formData.append('password', password);
+                
+                const response = await fetch('/api/encode', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Encoding failed');
+                }
+
+                // Handle the encoded image
+                const blob = await response.blob();
+                const encodedUrl = URL.createObjectURL(blob);
+                document.getElementById('processedImage').src = encodedUrl;
+                resultSection.classList.remove('d-none');
+                
+                // Enable download
+                document.getElementById('downloadBtn').onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = encodedUrl;
+                    a.download = 'encoded_image.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(encodedUrl);
+                };
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                loadingSpinner.classList.add('d-none');
+            }
+        };
+
+        // Add password toggle functionality
+        document.getElementById('passwordToggle').addEventListener('click', function() {
+            const passwordInput = document.getElementById('encodePassword');
+            const icon = this;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
+        // Matrix rain effect
+        const canvas = document.createElement('canvas');
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.zIndex = '-1';
+        document.querySelector('.matrix-bg').appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        const cols = Math.floor(width / 20);
+        const ypos = Array(cols).fill(0);
+
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, width, height);
+
+        function matrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+            ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = '#0f0';
+            ctx.font = '15pt monospace';
+
+            ypos.forEach((y, ind) => {
+                const text = String.fromCharCode(Math.random() * 128);
+                const x = ind * 20;
+                ctx.fillText(text, x, y);
+                if (y > 100 + Math.random() * 10000) ypos[ind] = 0;
+                else ypos[ind] = y + 20;
+            });
+        }
+
+        setInterval(matrix, 50);
+        window.onresize = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+        };
+    </script>
+</body>
+</html>

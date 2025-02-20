@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Steganography - Decode</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #000;
+            color: #0f0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+            background: linear-gradient(rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9));
+        }
+
+        .glass-container {
+            background: rgba(0, 20, 0, 0.7);
+            border: 1px solid rgba(0, 255, 0, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 255, 0, 0.15);
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-card {
+            background: rgba(0, 10, 0, 0.9);
+            border: 1px solid rgba(0, 255, 0, 0.1);
+            color: #0f0;
+        }
+
+        .text-white, .nav-link {
+            color: #0f0 !important;
+        }
+
+        .form-control {
+            background: rgba(0, 20, 0, 0.8);
+            border-color: rgba(0, 255, 0, 0.2);
+            color: #0f0;
+        }
+
+        .form-control:focus {
+            background: rgba(0, 30, 0, 0.9);
+            border-color: #0f0;
+            color: #0f0;
+            box-shadow: 0 0 0 0.25rem rgba(0, 255, 0, 0.25);
+        }
+
+        .btn-primary {
+            background: transparent;
+            border: 1px solid #0f0;
+            color: #0f0;
+        }
+
+        .btn-primary:hover {
+            background: rgba(0, 255, 0, 0.1);
+            border-color: #0f0;
+            color: #fff;
+        }
+
+        ::placeholder {
+            color: rgba(0, 255, 0, 0.5) !important;
+        }
+
+        .spinner-border {
+            border-color: #0f0;
+            border-right-color: transparent;
+        }
+
+        .decoded-message {
+            background: rgba(0, 20, 0, 0.8);
+            border: 1px solid rgba(0, 255, 0, 0.2);
+            color: #0f0;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 0 red, -2px 0 0 blue; }
+            1% { text-shadow: none; }
+            2% { text-shadow: 2px 0 0 red, -2px 0 0 blue; }
+            100% { text-shadow: none; }
+        }
+
+        h1, h4 { animation: glitch 3s infinite; }
+
+        .password-wrapper {
+            position: relative;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: rgba(0, 255, 0, 0.5);
+            z-index: 10;
+        }
+        .password-toggle:hover {
+            color: #0f0;
+        }
+
+        .p-3.bg-light {
+            background: rgba(0, 20, 0, 0.8) !important;
+            border: 1px solid rgba(0, 255, 0, 0.2);
+        }
+
+        #decodedMessage {
+            color: #0f0;
+            font-family: monospace;
+            font-size: 1.1em;
+        }
+
+        .icon-float { 
+            animation: float 3s ease-in-out infinite;
+            color: #0f0 !important;  /* Update icon color */
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-bg"></div>
+    <div class="container min-vh-100 d-flex align-items-center justify-content-center py-5">
+        <div class="glass-container w-100">
+            <nav class="nav justify-content-center mb-4">
+                <a class="nav-link text-white" href="/">Home</a>
+                <a class="nav-link text-white" href="/encode">Encode</a>
+                <a class="nav-link text-white" href="/decode">Decode</a>
+            </nav>
+
+            <div class="text-center mb-5">
+                <h1 class="display-4 text-white mb-3">Decode Message</h1>
+                <p class="lead text-white">Extract hidden messages from encoded images</p>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="feature-card p-4">
+                        <form id="decodeForm">
+                            <div class="mb-4 text-center">
+                                <i class="fas fa-file-image fa-3x text-primary mb-3 icon-float"></i>
+                                <input type="file" id="decodeImage" accept="image/*" class="form-control" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="password-wrapper">
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="decodePassword" 
+                                           placeholder="Enter password" 
+                                           required>
+                                    <i class="fas fa-eye password-toggle" id="passwordToggle"></i>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 py-2">
+                                <i class="fas fa-unlock-alt me-2"></i>Decode Message
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div id="loadingSpinner" class="text-center mt-4 d-none">
+                        <div class="spinner-border text-light" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-white mt-2">Decoding message...</p>
+                    </div>
+
+                    <!-- Result Section -->
+                    <div id="resultSection" class="feature-card mt-4 p-4 d-none">
+                        <h4 class="text-center mb-3">Decoded Message</h4>
+                        <div class="p-3 bg-light rounded">
+                            <p id="decodedMessage" class="mb-0"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('decodeForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const resultSection = document.getElementById('resultSection');
+            
+            try {
+                loadingSpinner.classList.remove('d-none');
+                resultSection.classList.add('d-none');
+                
+                const formData = new FormData();
+                const imageFile = document.getElementById('decodeImage').files[0];
+                formData.append('image', imageFile);
+                formData.append('password', document.getElementById('decodePassword').value);
+                
+                const response = await fetch('/api/decode', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Decoding failed');
+
+                const data = await response.json();
+                document.getElementById('decodedMessage').textContent = data.message;
+                resultSection.classList.remove('d-none');
+                showDecodeSuccess();
+                
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                loadingSpinner.classList.add('d-none');
+            }
+        };
+
+        // Add password toggle functionality
+        document.getElementById('passwordToggle').addEventListener('click', function() {
+            const passwordInput = document.getElementById('decodePassword');
+            const icon = this;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
+        // Matrix rain effect
+        const canvas = document.createElement('canvas');
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.zIndex = '-1';
+        document.querySelector('.matrix-bg').appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        const cols = Math.floor(width / 20);
+        const ypos = Array(cols).fill(0);
+
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, width, height);
+
+        function matrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+            ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = '#0f0';
+            ctx.font = '15pt monospace';
+
+            ypos.forEach((y, ind) => {
+                const text = String.fromCharCode(Math.random() * 128);
+                const x = ind * 20;
+                ctx.fillText(text, x, y);
+                if (y > 100 + Math.random() * 10000) ypos[ind] = 0;
+                else ypos[ind] = y + 20;
+            });
+        }
+
+        setInterval(matrix, 50);
+        window.onresize = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+        };
+
+        // Add success animation when message is decoded
+        const showDecodeSuccess = () => {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#0f0', '#00ff00', '#90EE90']
+            });
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+</body>
+</html>

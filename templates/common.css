@@ -1,0 +1,185 @@
+/* Media Queries for Different Screen Sizes */
+:root {
+    --container-width-desktop: 800px;
+    --container-width-tablet: 95%;
+    --container-width-mobile: 98%;
+}
+
+/* Base Responsive Container */
+.container {
+    width: 100%;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 1024px) {
+    .container {
+        width: var(--container-width-tablet);
+        padding: 25px;
+    }
+    
+    .card-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .container {
+        width: var(--container-width-mobile);
+        padding: 20px;
+        margin: 10px;
+    }
+    
+    .card-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .hero h2 {
+        font-size: 2em;
+    }
+    
+    .floating-icons {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .form-group {
+        padding: 15px;
+    }
+    
+    .file-input-button, .textarea-input-button {
+        padding: 20px 15px;
+    }
+    
+    button[type="submit"] {
+        padding: 12px;
+    }
+    
+    .hero h2 {
+        font-size: 1.8em;
+    }
+    
+    .hero p {
+        font-size: 1em;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) {
+    .card:hover,
+    .form-group:hover,
+    button:hover {
+        transform: none;
+    }
+    
+    .floating-icon:hover {
+        animation-play-state: running;
+    }
+}
+
+/* Dynamic Font Sizing */
+html {
+    font-size: calc(14px + 0.390625vw);
+}
+
+.floating-icons {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.floating-icon {
+    position: absolute;
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.6);
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    animation: floatUp 8s linear infinite;
+    z-index: 1;
+}
+
+@keyframes floatUp {
+    0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-10vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.section {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+form {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.form-group {
+    width: 100%;
+    margin: 0 auto 30px auto;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    backdrop-filter: blur(5px);
+    text-align: center;
+}
+
+.nav-links {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+h1, h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    width: 100%;
+}
+
+/* Consistent button styling */
+button[type="submit"], .btn {
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 15px 30px;
+    border-radius: 25px;
+    display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container { padding: 20px; }
+    form { width: 95%; }
+    button[type="submit"], .btn { width: 100%; }
+}
